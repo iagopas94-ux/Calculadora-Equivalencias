@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculadora de equivalencias nutricionales</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#26302A; --paper:#F1F1EA; --paper-deep:#E7E7DC;
+    --ochre:#B8842E; --teal:#2E6B62; --clay:#AD5138; --plum:#6C5470;
+    --line:#D8D6C8; --muted:#6B7167; --muted2:#4A5148;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;}
+  .serif{font-family:'Source Serif 4',Georgia,serif;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 20px 60px;}
+  header{margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid var(--ink);}
+  .eyebrow{font-size:12px;letter-spacing:.02em;color:var(--ochre);margin:0 0 8px;}
+  h1{font-size:32px;font-weight:600;line-height:1.15;margin:0;}
+  header p{margin-top:12px;max-width:560px;color:var(--muted2);font-size:15px;line-height:1.5;}
+  section{margin-bottom:40px;}
+  h2{font-size:20px;font-weight:600;margin:0 0 16px;display:flex;align-items:baseline;gap:8px;}
+  h2 .n{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--ochre);}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:12px;color:var(--muted);}
+  input[type=number]{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+  .macro-row{margin-bottom:20px;}
+  .macro-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .macro-name{font-size:14px;display:flex;align-items:center;gap:8px;}
+  .dot{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .macro-val{font-family:'IBM Plex Mono',monospace;font-size:14px;}
+  .macro-val .g{color:var(--muted);}
+  input[type=range]{width:100%;accent-color:var(--ink);}
+  .bar-track{height:6px;background:var(--paper-deep);border-radius:3px;overflow:hidden;}
+  .bar-fill{height:6px;border-radius:3px;}
+  .hint{font-size:12px;color:var(--muted);margin-top:12px;}
+  .steppers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media(max-width:520px){.steppers{grid-template-columns:repeat(2,1fr);}}
+  .stepper{padding:10px 12px;border:1px solid var(--line);border-top:3px solid var(--ink);border-radius:4px;background:#fff;}
+  .stepper .lbl{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .stepper .row{display:flex;align-items:center;justify-content:space-between;}
+  .stepper button{width:24px;height:24px;border:1px solid var(--line);border-radius:4px;background:#fff;font-size:14px;cursor:pointer;line-height:1;}
+  .stepper .val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
+  .results{border:1px solid var(--ink);border-radius:4px;overflow:hidden;}
+  .r-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-left:4px solid;}
+  .r-row + .r-row{border-top:1px solid var(--line);}
+  .r-row:nth-child(even){background:var(--paper-deep);}
+  .r-row:nth-child(odd){background:#fff;}
+  .r-name{font-size:15px;font-weight:500;}
+  .r-role{font-size:12px;color:var(--muted);margin-left:8px;}
+  .r-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;}
+  .totals{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);}
+  .acc-item{border:1px solid var(--line);border-radius:4px;margin-bottom:8px;background:#fff;}
+  .acc-head{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:none;border:none;cursor:pointer;font-family:inherit;color:inherit;text-align:left;}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#fff;border-radius:3px;padding:2px 6px;margin-right:10px;}
+  .acc-title{font-size:15px;font-weight:500;}
+  .acc-body{padding:0 16px 16px;border-top:1px solid var(--line);}
+  .acc-note{font-size:12px;color:var(--muted);font-style:italic;margin:12px 0 4px;}
+  .food-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 0;border-top:1px solid var(--line);}
+  .food-row:first-of-type{border-top:none;}
+  .food-name{font-size:14px;}
+  .food-amt{font-family:'IBM Plex Mono',monospace;font-size:14px;white-space:nowrap;}
+  .meal-counters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px;}
+  @media(max-width:520px){.meal-counters{grid-template-columns:repeat(2,1fr);}}
+  .mc{padding:8px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;}
+  .mc .lbl{font-size:12px;color:var(--muted);}
+  .mc .val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
+  .mc .val .of{font-size:12px;font-weight:400;color:var(--muted);}
+  .meal-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px;}
+  .meal-tab{padding:6px 12px;font-size:14px;border:1px solid var(--ink);border-radius:4px;background:transparent;color:var(--ink);cursor:pointer;font-family:inherit;}
+  .meal-tab.active{background:var(--ink);color:var(--paper);}
+  .picker{padding:16px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;background:#fff;border:1px solid var(--line);border-radius:4px;}
+  select{font-size:14px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;font-family:inherit;background:#fff;color:var(--ink);}
+  .qty-input{font-family:'IBM Plex Mono',monospace;font-size:14px;padding:7px 8px;width:70px;border:1px solid var(--line);border-radius:4px;}
+  .preview{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);align-self:center;padding-bottom:6px;}
+  .add-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:14px;background:var(--ink);color:var(--paper);border:none;border-radius:4px;cursor:pointer;margin-left:auto;font-family:inherit;}
+  .meal-box{border:1px solid var(--line);border-radius:4px;background:#fff;}
+  .meal-box-head{padding:10px 16px;font-size:14px;font-weight:500;background:var(--paper-deep);border-bottom:1px solid var(--line);}
+  .meal-empty{padding:24px 16px;text-align:center;font-size:14px;color:var(--muted);}
+  .meal-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-top:1px solid var(--line);border-left:3px solid;}
+  .meal-item-name{font-size:14px;}
+  .meal-item-sub{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);}
+  .rm-btn{border:none;background:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:4px;}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);display:flex;gap:8px;font-size:12px;color:var(--muted);align-items:flex-start;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">HERRAMIENTA DE PLANIFICACIÓN NUTRICIONAL</p>
+    <h1 class="serif">Calculadora de equivalencias</h1>
+    <p>Convierte un objetivo calórico en gramos de macronutrientes y, de ahí, en equivalencias de alimentos — para que cada cliente construya sus propias comidas eligiendo dentro de cada grupo.</p>
+  </header>
+
+  <section>
+    <h2 class="serif"><span class="n">1.</span> Objetivo calórico diario</h2>
+    <div class="field">
+      <label>kcal / día</label>
+      <input type="number" id="kcal" value="2500" min="800" step="50" />
+    </div>
+  </section>
+
+  <section>
+    <h2 class="serif"><span class="n">2.</span> Reparto de macronutrientes</h2>
+    <div class="macro-row">
+      <div class="macro-head">
+        <span class="macro-name"><span class="dot" style="background:var(--ochre)"></span>Hidratos de carbono</span>
+        <span class="macro-val"><span id="hc-pct">50</span>% <span class="g">· <span id="hc-g">0</span> g</span></span>
+      </div>
+      <input type="range" id="hc-slider" min="0" max="90" value="50" />
+    </div>
+    <div class="macro-row">
+      <div class="macro-head">
+        <span class="macro-name"><span class="dot" style="background:var(--teal)"></span>Proteína</span>
+        <span class="macro-val"><span id="pro-pct">20</span>% <span class="g">· <span id="pro-g">0</span> g</span></span>
+      </div>
+      <input type="range" id="pro-slider" min="0" max="90" value="20" />
+    </div>
+    <div class="macro-row">
+      <div class="macro-head">
+        <span class="macro-name"><span class="dot" style="background:var(--clay)"></span>Grasa</span>
+        <span class="macro-val"><span id="gr-pct">30</span>% <span class="g">· <span id="gr-g">0</span> g</span></span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="gr-bar" style="background:var(--clay);width:30%"></div></div>
+    </div>
+    <p class="hint">HC y proteína son ajustables; la grasa ocupa el % restante hasta 100. 4 kcal/g para HC y proteína, 9 kcal/g para grasa.</p>
+  </section>
+
+  <section>
+    <h2 class="serif"><span class="n">3.</span> Equivalentes de libre elección</h2>
+    <p style="font-size:15px;color:var(--muted2);margin-bottom:16px;">Fija cuántos equivalentes de lácteos, verdura y fruta quieres repartir tú. El resto se calcula automáticamente: la legumbre cubre siempre la mitad de los equivalentes de proteína (legumbre = proteína), y la fuente de HC y la grasa cuadran lo que falte del objetivo de macros.</p>
+    <div class="steppers">
+      <div class="stepper" style="border-top-color:var(--plum)">
+        <div class="lbl">Lácteos</div>
+        <div class="row"><button onclick="step('dairy',-1)">−</button><span class="val" id="dairy-val">2</span><button onclick="step('dairy',1)">+</button></div>
+      </div>
+      <div class="stepper" style="border-top-color:var(--ochre)">
+        <div class="lbl">Verdura</div>
+        <div class="row"><button onclick="step('veg',-1)">−</button><span class="val" id="veg-val">4</span><button onclick="step('veg',1)">+</button></div>
+      </div>
+      <div class="stepper" style="border-top-color:var(--ochre)">
+        <div class="lbl">Fruta</div>
+        <div class="row"><button onclick="step('fruit',-1)">−</button><span class="val" id="fruit-val">4</span><button onclick="step('fruit',1)">+</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="serif"><span class="n">4.</span> Equivalencias resultantes</h2>
+    <div class="results" id="results"></div>
+    <div class="totals" id="totals"></div>
+  </section>
+
+  <section>
+    <h2 class="serif"><span class="n">5.</span> Explora los alimentos de cada grupo</h2>
+    <div id="accordion"></div>
+  </section>
+
+  <section>
+    <h2 class="serif"><span class="n">6.</span> Construye tus comidas</h2>
+    <p style="font-size:15px;color:var(--muted2);margin-bottom:16px;">Reparte los equivalentes calculados arriba entre las comidas del día. El contador te avisa si te pasas o te quedas corto en algún grupo.</p>
+    <div class="meal-counters" id="meal-counters"></div>
+    <div class="meal-tabs" id="meal-tabs"></div>
+    <div class="picker">
+      <div class="field">
+        <label>Grupo</label>
+        <select id="picker-group" onchange="onPickerGroupChange()"></select>
+      </div>
+      <div class="field" style="min-width:220px;">
+        <label>Alimento</label>
+        <select id="picker-food" onchange="renderPreview()"></select>
+      </div>
+      <div class="field">
+        <label>Equivalentes</label>
+        <input type="number" class="qty-input" id="picker-qty" value="1" min="0.5" step="0.5" oninput="renderPreview()" />
+      </div>
+      <div class="preview" id="picker-preview"></div>
+      <button class="add-btn" onclick="addToMeal()">+ Añadir a <span id="add-meal-name">Desayuno</span></button>
+    </div>
+    <div class="meal-box">
+      <div class="meal-box-head" id="meal-box-title">Desayuno</div>
+      <div id="meal-list"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>ⓘ</span>
+    <p>Los valores de equivalencias por alimento están tomados de tu tabla (gramos de HC–proteína–grasa–kcal por equivalencia). La legumbre es isocalórica con las fuentes de proteína animal/vegetal, así que la app reparte siempre a partes iguales entre ambas: la mitad de los equivalentes "de proteína" se cubren con legumbre.</p>
+  </footer>
+</div>
+
+<script>
+/* ---------------- DATOS ---------------- */
+const COLORS = { ochre:'var(--ochre)', teal:'var(--teal)', clay:'var(--clay)', plum:'var(--plum)' };
+
+const GROUPS = {
+  lacteos: { name:'Lácteos', macro:{hc:10,pro:10,gr:5,kcal:120}, color:'var(--plum)', tag:'LA', role:'mixto (HC · PRO · GR)',
+    foods:[
+      {name:'Leche semidesnatada o bebida vegetal', unit:'ml', amount:250},
+      {name:'Yogur natural', unit:'g', amount:250},
+      {name:'Queso fresco batido desnatado', unit:'g', amount:250},
+      {name:'Yogur griego ligero', unit:'g', amount:250},
+    ]},
+  verdura: { name:'Verduras, hortalizas y hongos', macro:{hc:10,pro:0,gr:0,kcal:40}, color:'var(--ochre)', tag:'VE', role:'fuente de HC', note:'Puedes prescindir de pesarlos',
+    foods:[
+      {name:'Escarola, lechuga, endivias, acelgas, espinacas, espárragos, pepino, berenjena, tomate, setas, champiñón, pimiento, col, coliflor, calabacín, judía verde…', unit:'g', amount:300},
+      {name:'Zanahoria, alcachofa, cebolla, remolacha, calabaza, chirivía, coles de Bruselas', unit:'g', amount:150},
+      {name:'Guisantes frescos', unit:'g', amount:50},
+    ]},
+  fruta: { name:'Frutas', macro:{hc:10,pro:0,gr:0,kcal:40}, color:'var(--ochre)', tag:'FR', role:'fuente de HC',
+    foods:[
+      {name:'Melón, sandía, fresas, frutos rojos', unit:'g', amount:150},
+      {name:'Albaricoque, naranja, pera, mandarina, ciruela, manzana, kiwi, piña, papaya, mango…', unit:'g', amount:100},
+      {name:'Plátano, uva, cerezas, higos, chirimoya, níspero…', unit:'g', amount:50},
+    ]},
+  fuenteHC: { name:'Fuentes de Hidratos de Carbono', macro:{hc:10,pro:1.5,gr:0,kcal:45}, color:'var(--ochre)', tag:'HC', role:'fuente de HC (cereales y tubérculos)',
+    foods:[
+      {name:'Patata, boniato (peso crudo)', unit:'g', amount:50},
+      {name:'Ñoquis de patata (peso crudo)', unit:'g', amount:30},
+      {name:'Pan, castañas', unit:'g', amount:20},
+      {name:'Tostadas, cereales', unit:'g', amount:15},
+      {name:'Avena', unit:'g', amount:15},
+      {name:'Arroz, sémola, harina (peso crudo)', unit:'g', amount:15},
+      {name:'Tortilla de trigo / maíz', unit:'g', amount:15},
+      {name:'Pasta (peso crudo)', unit:'g', amount:15},
+      {name:'Quinoa (peso crudo)', unit:'g', amount:15},
+      {name:'Palomitas de maíz', unit:'g', amount:15},
+    ]},
+  proteina: { name:'Fuentes de Proteína', macro:{hc:0,pro:10,gr:5,kcal:85}, color:'var(--teal)', tag:'PR', role:'fuente de proteína',
+    foods:[
+      {name:'Pollo, conejo, pavo, cerdo, ternera, cordero, salmón', unit:'g', amount:50},
+      {name:'Pescado blanco, marisco', unit:'g', amount:75},
+      {name:'Tofu', unit:'g', amount:90},
+      {name:'Soja texturizada', unit:'g', amount:20},
+      {name:'Jamón serrano (máx. 1/día)', unit:'g', amount:40},
+      {name:'Salmón ahumado (máx. 1/día)', unit:'g', amount:40},
+      {name:'Queso fresco de Burgos 0%', unit:'g', amount:125},
+      {name:'Queso cottage', unit:'g', amount:80},
+      {name:'Queso cremoso o en lonchas bajo en grasa (máx. 1/día)', unit:'g', amount:40},
+      {name:'Huevo (1-2 al día)', unit:'ud', amount:1},
+      {name:'Clara de huevo', unit:'ml', amount:150},
+    ]},
+  legumbre: { name:'Legumbres', macro:{hc:10,pro:5,gr:0,kcal:85}, color:'var(--teal)', tag:'LG', role:'fuente de proteína (isocalórica con Proteína)',
+    foods:[
+      {name:'Lentejas en seco o pasta de lenteja (u 80 g cocidas de bote)', unit:'g', amount:20},
+      {name:'Garbanzos en seco o pasta de garbanzo (u 80 g cocidos de bote)', unit:'g', amount:20},
+      {name:'Alubias en seco (u 80 g cocidas de bote)', unit:'g', amount:20},
+      {name:'Guisante texturizado', unit:'g', amount:20},
+    ]},
+  grasa: { name:'Fuentes de Grasa', macro:{hc:0,pro:0,gr:10,kcal:90}, color:'var(--clay)', tag:'GR', role:'fuente de grasa',
+    foods:[
+      {name:'Aceite (1 cucharada)', unit:'ml', amount:10},
+      {name:'Aceitunas negras', unit:'g', amount:40},
+      {name:'Aceitunas verdes', unit:'g', amount:80},
+      {name:'Aguacate', unit:'g', amount:60},
+      {name:'Frutos secos', unit:'g', amount:15},
+      {name:'Chocolate negro', unit:'g', amount:15},
+    ]},
+};
+const GROUP_ORDER = ['lacteos','verdura','fruta','fuenteHC','proteina','legumbre','grasa'];
+const MEALS = ['Desayuno','Media mañana','Comida','Merienda','Cena'];
+
+const round = n => Math.round(n*10)/10;
+const fmt = n => Number.isInteger(n) ? n : round(n);
+
+/* ---------------- ESTADO ---------------- */
+let state = {
+  kcal: 2500, pctHC: 50, pctPRO: 20,
+  dairy: 2, veg: 4, fruit: 4,
+  openGroup: 'fuenteHC',
+  activeMeal: 'Desayuno',
+  meals: Object.fromEntries(MEALS.map(m=>[m,[]])),
+  picker: { group:'fuenteHC', foodIdx:0, qty:1 },
+};
+
+/* ---------------- CÁLCULO ---------------- */
+function calc(){
+  const pctGR = Math.max(0, 100 - state.pctHC - state.pctPRO);
+  const gHC = round(state.kcal*state.pctHC/100/4);
+  const gPRO = round(state.kcal*state.pctPRO/100/4);
+  const gGR = round(state.kcal*pctGR/100/9);
+
+  const carbsFijos = state.dairy*10 + state.veg*10 + state.fruit*10;
+  const numerador = gPRO - state.dairy*10 - 0.15*(gHC - carbsFijos);
+  let legumbre = Math.max(0, Math.round(numerador/13.5));
+  const proteina = legumbre;
+  const fuenteHC = Math.max(0, Math.round((gHC - carbsFijos - legumbre*10)/10));
+  const fatFromFree = state.dairy*5 + proteina*5;
+  const grasa = Math.max(0, Math.round((gGR - fatFromFree)/10));
+
+  const equivalentes = { lacteos:state.dairy, verdura:state.veg, fruta:state.fruit, fuenteHC, proteina, legumbre, grasa };
+
+  let totHC=0,totPRO=0,totGR=0,totKCAL=0;
+  GROUP_ORDER.forEach(k=>{
+    const n = equivalentes[k], m = GROUPS[k].macro;
+    totHC+=n*m.hc; totPRO+=n*m.pro; totGR+=n*m.gr; totKCAL+=n*m.kcal;
+  });
+
+  return { pctGR, gHC, gPRO, gGR, equivalentes, totHC, totPRO, totGR, totKCAL };
+}
+
+/* ---------------- RENDER ---------------- */
+function renderMacros(c){
+  document.getElementById('hc-pct').textContent = state.pctHC;
+  document.getElementById('pro-pct').textContent = state.pctPRO;
+  document.getElementById('gr-pct').textContent = c.pctGR;
+  document.getElementById('hc-g').textContent = c.gHC;
+  document.getElementById('pro-g').textContent = c.gPRO;
+  document.getElementById('gr-g').textContent = c.gGR;
+  document.getElementById('gr-bar').style.width = c.pctGR + '%';
+}
+
+function renderSteppers(){
+  document.getElementById('dairy-val').textContent = state.dairy;
+  document.getElementById('veg-val').textContent = state.veg;
+  document.getElementById('fruit-val').textContent = state.fruit;
+}
+
+function renderResults(c){
+  const el = document.getElementById('results');
+  el.innerHTML = GROUP_ORDER.map(k=>{
+    const g = GROUPS[k], n = c.equivalentes[k];
+    return `<div class="r-row" style="border-left-color:${g.color}">
+      <div><span class="r-name">${g.name}</span><span class="r-role">${g.role}</span></div>
+      <span class="r-val">${fmt(n)}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('totals').innerHTML = `
+    <span>HC aportados: ${fmt(c.totHC)} g (objetivo ${c.gHC} g)</span>
+    <span>PRO aportados: ${fmt(c.totPRO)} g (objetivo ${c.gPRO} g)</span>
+    <span>GR aportados: ${fmt(c.totGR)} g (objetivo ${c.gGR} g)</span>
+    <span>≈ ${fmt(c.totKCAL)} kcal</span>
+  `;
+}
+
+function renderAccordion(){
+  const el = document.getElementById('accordion');
+  el.innerHTML = GROUP_ORDER.map(k=>{
+    const g = GROUPS[k];
+    const open = state.openGroup === k;
+    const foodsHtml = g.foods.map(f=>`
+      <div class="food-row">
+        <span class="food-name">${f.name}</span>
+        <span class="food-amt" style="color:${g.color}">${f.amount} ${f.unit}</span>
+      </div>`).join('');
+    return `<div class="acc-item">
+      <button class="acc-head" onclick="toggleAccordion('${k}')">
+        <span style="display:flex;align-items:center;">
+          <span class="tag" style="background:${g.color}">${g.tag}</span>
+          <span class="acc-title">${g.name}</span>
+        </span>
+        <span>${open ? '▲' : '▼'}</span>
+      </button>
+      ${open ? `<div class="acc-body">
+          ${g.note ? `<p class="acc-note">${g.note}</p>` : ''}
+          ${foodsHtml}
+        </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderMealTabs(){
+  const el = document.getElementById('meal-tabs');
+  el.innerHTML = MEALS.map(m=>`
+    <button class="meal-tab ${state.activeMeal===m?'active':''}" onclick="setActiveMeal('${m}')">${m}</button>
+  `).join('');
+  document.getElementById('add-meal-name').textContent = state.activeMeal;
+  document.getElementById('meal-box-title').textContent = state.activeMeal;
+}
+
+function renderMealCounters(c){
+  const used = Object.fromEntries(GROUP_ORDER.map(k=>[k,0]));
+  Object.values(state.meals).forEach(items => items.forEach(it => used[it.group]+=it.qty));
+  const el = document.getElementById('meal-counters');
+  el.innerHTML = GROUP_ORDER.map(k=>{
+    const g = GROUPS[k];
+    const total = c.equivalentes[k];
+    const remaining = round(total - used[k]);
+    return `<div class="mc">
+      <div class="lbl">${g.name}</div>
+      <div class="val" style="color:${remaining<0?'var(--clay)':g.color}">${fmt(remaining)} <span class="of">/ ${fmt(total)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderPickerOptions(){
+  const groupSel = document.getElementById('picker-group');
+  groupSel.innerHTML = GROUP_ORDER.map(k=>`<option value="${k}" ${state.picker.group===k?'selected':''}>${GROUPS[k].name}</option>`).join('');
+  const foodSel = document.getElementById('picker-food');
+  foodSel.innerHTML = GROUPS[state.picker.group].foods.map((f,idx)=>`<option value="${idx}" ${state.picker.foodIdx===idx?'selected':''}>${f.name}</option>`).join('');
+  document.getElementById('picker-qty').value = state.picker.qty;
+  renderPreview();
+}
+
+function renderPreview(){
+  state.picker.foodIdx = Number(document.getElementById('picker-food').value);
+  state.picker.qty = Number(document.getElementById('picker-qty').value);
+  const f = GROUPS[state.picker.group].foods[state.picker.foodIdx];
+  document.getElementById('picker-preview').textContent = `= ${fmt(f.amount*state.picker.qty)} ${f.unit}`;
+}
+
+function renderMealList(){
+  const items = state.meals[state.activeMeal];
+  const el = document.getElementById('meal-list');
+  if(items.length===0){
+    el.innerHTML = `<div class="meal-empty">Todavía no hay alimentos en esta comida.</div>`;
+    return;
+  }
+  el.innerHTML = items.map(it=>`
+    <div class="meal-item" style="border-left-color:${GROUPS[it.group].color}">
+      <div>
+        <div class="meal-item-name">${it.foodName}</div>
+        <div class="meal-item-sub">${fmt(it.qty)} equiv · ${fmt(it.amountPerEquiv*it.qty)} ${it.unit}</div>
+      </div>
+      <button class="rm-btn" onclick="removeItem('${it.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderAll(){
+  const c = calc();
+  renderMacros(c);
+  renderSteppers();
+  renderResults(c);
+  renderAccordion();
+  renderMealTabs();
+  renderMealCounters(c);
+  renderMealList();
+}
+
+/* ---------------- EVENTOS ---------------- */
+function step(field, delta){
+  state[field] = Math.max(0, state[field] + delta);
+  renderAll();
+}
+
+function toggleAccordion(k){
+  state.openGroup = state.openGroup === k ? null : k;
+  renderAccordion();
+}
+
+function setActiveMeal(m){
+  state.activeMeal = m;
+  renderMealTabs();
+  renderMealList();
+}
+
+function onPickerGroupChange(){
+  state.picker.group = document.getElementById('picker-group').value;
+  state.picker.foodIdx = 0;
+  renderPickerOptions();
+}
+
+function addToMeal(){
+  const group = state.picker.group;
+  const food = GROUPS[group].foods[state.picker.foodIdx];
+  const qty = Number(document.getElementById('picker-qty').value);
+  if(!food || qty<=0) return;
+  state.meals[state.activeMeal].push({
+    id: Math.random().toString(36).slice(2),
+    group, foodName: food.name, unit: food.unit, amountPerEquiv: food.amount, qty
+  });
+  renderAll();
+}
+
+function removeItem(id){
+  state.meals[state.activeMeal] = state.meals[state.activeMeal].filter(i=>i.id!==id);
+  renderAll();
+}
+
+document.getElementById('kcal').addEventListener('input', e=>{
+  state.kcal = Math.max(0, Number(e.target.value));
+  renderAll();
+});
+document.getElementById('hc-slider').addEventListener('input', e=>{
+  state.pctHC = Math.min(Number(e.target.value), 100 - state.pctPRO);
+  renderAll();
+});
+document.getElementById('pro-slider').addEventListener('input', e=>{
+  state.pctPRO = Math.min(Number(e.target.value), 100 - state.pctHC);
+  renderAll();
+});
+
+renderPickerOptions();
+renderAll();
+</script>
+</body>
+</html>
